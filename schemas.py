@@ -10,6 +10,7 @@ class UsuarioSchema(BaseModel):
     senha: str
     telefone: Telefone
     cpf: CPF
+    token_autenticador = Optional[str] = None
 
 class UsuarioResponse(BaseModel):
     id: int
