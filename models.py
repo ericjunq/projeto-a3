@@ -33,6 +33,7 @@ class Prefeitura(Base):
     senha_hash = Column(String(255), nullable=False)
     telefone = Column(String(11), unique=True, nullable=False)
     cpf = Column(String(11), unique=True, nullable=False)
+    token_autenticador = Column(String, ForeignKey('tokens_autenticadores.token'))
     token_id = Column(Integer, ForeignKey('tokens_autenticadores.id'),nullable=False, unique=True)
     created_at = Column(
         DateTime(timezone=True), 
