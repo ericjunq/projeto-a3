@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from security.validations import CPF, Telefone, CNPJ
 from datetime import datetime
 from typing import Optional
+from enum import Enum
 
 class UsuarioSchema(BaseModel):
     nome: str 
@@ -49,3 +50,24 @@ class PrefeituraUpdate(BaseModel):
     email: Optional[EmailStr] = None
     senha: Optional[str] = None
     telefone: Optional[Telefone] = None
+
+
+# Reclamações Eric
+
+class StatusReclamacao(str, Enum):
+    concluida = "Concluída"
+    em_andamento = "Em Andamento"
+    nao_realizada = "Não Realizada"
+
+
+class ReclaamacaoResponse(BaseModel):
+    id: int
+    titulo: str
+    descricao: str
+    status: str
+    imagem_url: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_atributes = True
