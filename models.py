@@ -1,6 +1,9 @@
 from database import Base
 from sqlalchemy import Column, func, Integer, Boolean, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+from enum import Enum as SAEnum
+from enums import StatusReclamacao, TipoRequestEnum
+from sqlalchemy import Enum as SAEnum
 
 
 class Usuario(Base):
@@ -77,9 +80,10 @@ class Reclamacao(Base):
     __tablename__ = 'reclamacoes'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
+    tipo = Column(SAEnum(TipoRequestEnum), nullable=False)
     titulo = Column(String(100), nullable=False)
     descricao = Column(String(500), nullable=False)
-    status = Column(String(20), nullable=False, default='Em Andamento')
+    status = Column(SAEnum(StatusReclamacao), nullable=False, default=StatusReclamacao.em_andamento)
     imagem_url = Column(String(255), nullable=False)
     usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
     created_at = Column(

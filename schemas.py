@@ -3,6 +3,7 @@ from security.validations import CPF, Telefone, CNPJ
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+from enums import TipoRequestEnum, StatusReclamacao
 
 class UsuarioSchema(BaseModel):
     nome: str 
@@ -54,17 +55,12 @@ class PrefeituraUpdate(BaseModel):
 
 # Reclamações Eric
 
-class StatusReclamacao(str, Enum):
-    concluida = "Concluída"
-    em_andamento = "Em Andamento"
-    nao_realizada = "Não Realizada"
-
-
 class ReclaamacaoResponse(BaseModel):
     id: int
+    tipo: TipoRequestEnum
     titulo: str
     descricao: str
-    status: str
+    status: StatusReclamacao
     imagem_url: str
     created_at: datetime
     updated_at: Optional[datetime] = None
