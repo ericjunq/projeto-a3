@@ -55,7 +55,7 @@ def get_current_user(
             settings.secret_key,
             [settings.algorithm]
         )
-        email = payload.get('email')
+        email = payload.get('sub')
         if email is None:
             raise HTTPException(status_code=401, detail='Token inválido')
     except JWTError:
@@ -77,7 +77,7 @@ def get_current_prefeitura(
             settings.secret_key,
             [settings.algorithm]
         )
-        email = payload.get('email')
+        email = payload.get('sub')  # corrigido: era 'email'
         if email is None:
             raise HTTPException(status_code=401, detail='Token inválido')
     except JWTError:
@@ -85,6 +85,6 @@ def get_current_prefeitura(
     
     prefeitura = db.query(Prefeitura).filter(Prefeitura.email == email).first()
     if prefeitura is None:
-        raise HTTPException(status_code=400, detail='Prefeitura não encontrado')
+        raise HTTPException(status_code=400, detail='Prefeitura não encontrada')
 
     return prefeitura

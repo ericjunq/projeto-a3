@@ -55,10 +55,13 @@ class PrefeituraUpdate(BaseModel):
 
 # Reclamações Eric
 
-class ReclaamacaoResponse(BaseModel):
+class ReclamacaoResponse(BaseModel):
     id: int
     tipo: TipoRequestEnum
     titulo: str
+    bairro: str
+    rua: str
+    numero: int
     descricao: str
     status: StatusReclamacao
     imagem_url: str

@@ -6,8 +6,9 @@ import shutil
 
 from dependencies import get_db
 from models import Usuario, Reclamacao
-from schemas import ReclaamacaoResponse, StatusReclamacao
+from schemas import ReclamacaoResponse, StatusReclamacao
 from security.security import get_current_user
+from enums import TipoRequestEnum
 
 reclamacoes_router = APIRouter(prefix='/reclamacoes', tags=['Reclamações'])
 
@@ -15,9 +16,13 @@ UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
-@reclamacoes_router.post('/criar', response_model=ReclaamacaoResponse)
+@reclamacoes_router.post('/criar', response_model=ReclamacaoResponse)
 async def criar_reclamacao(
     titulo: str = Form(...),
+    tipo: TipoRequestEnum = Form(...),
+    bairro: str = Form(...),
+    rua: str = Form(...),
+    numero: int = Form(...),
     descricao: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -34,23 +39,25 @@ async def criar_reclamacao(
     with destino.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-        reclamacao = Reclamacao(
+    reclamacao = Reclamacao(
+        tipo=tipo,
         titulo=titulo,
+        bairro=bairro,
+        rua=rua,
+        numero=numero,
         descricao=descricao,
         status=StatusReclamacao.em_andamento,
         imagem_url=str(destino),
         usuario_id=usuario.id
+    )
 
-        )
-
-        db.add(reclamacao)
-        db.commit()
-        db.refresh(reclamacao)
-    
+    db.add(reclamacao)
+    db.commit()
+    db.refresh(reclamacao)
 
     return reclamacao
 
-@reclamacoes_router.get('/minhas', response_model=list[ReclaamacaoResponse])
+@reclamacoes_router.get('/minhas', response_model=list[ReclamacaoResponse])
 async def listar_minhas_reclamacoes(
     status: Optional[StatusReclamacao] = None,
     db: Session = Depends(get_db),
@@ -65,7 +72,7 @@ async def listar_minhas_reclamacoes(
     return query.order_by(Reclamacao.created_at.desc()).all()
 
 
-@reclamacoes_router.get('minhas/{reclamacao_id}', response_model=ReclaamacaoResponse)
+@reclamacoes_router.get('/minhas/{reclamacao_id}', response_model=ReclamacaoResponse)
 async def detalhar_reclamacao(
     reclamacao_id: int,
     db: Session = Depends(get_db),
@@ -74,10 +81,9 @@ async def detalhar_reclamacao(
     reclamacao = db.query(Reclamacao).filter(
         Reclamacao.id == reclamacao_id,
         Reclamacao.usuario_id == usuario.id
-    ).filter()
+    ).first()
 
     if not reclamacao:
         raise HTTPException(status_code=404, detail='Reclamação não encontrada')
     
     return reclamacao
-    
