@@ -5,9 +5,9 @@ from pathlib import Path
 import shutil
 
 from dependencies import get_db
-from models import Usuario, Reclamacao
-from schemas import ReclamacaoResponse, StatusReclamacao
-from security.security import get_current_user
+from models import Prefeitura, Usuario, Reclamacao
+from schemas import ReclamacaoResponse, ReclamacaoStatusUpdate, StatusReclamacao
+from security.security import get_current_prefeitura, get_current_user
 from enums import TipoRequestEnum
 
 reclamacoes_router = APIRouter(prefix='/reclamacoes', tags=['Reclamações'])
@@ -15,6 +15,11 @@ reclamacoes_router = APIRouter(prefix='/reclamacoes', tags=['Reclamações'])
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CIDADÃO
+# ─────────────────────────────────────────────────────────────────────────────
 
 @reclamacoes_router.post('/criar', response_model=ReclamacaoResponse)
 async def criar_reclamacao(
@@ -86,4 +91,45 @@ async def detalhar_reclamacao(
     if not reclamacao:
         raise HTTPException(status_code=404, detail='Reclamação não encontrada')
     
+    return reclamacao
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PREFEITURA
+# ─────────────────────────────────────────────────────────────────────────────
+
+@reclamacoes_router.get('/recebidas', response_model=list[ReclamacaoResponse])
+async def listar_reclamacoes_recebidas(
+    status: Optional[StatusReclamacao] = None,
+    prefeitura: Prefeitura = Depends(get_current_prefeitura),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Reclamacao.filter(Reclamacao.prefeitura_id == prefeitura.id))
+
+    if status:
+        query = query.filter(Reclamacao.status == status)
+
+    return query.order_by(Reclamacao.created_at.desc()).all()
+
+
+
+@reclamacoes_router.patch('/{recebidas_id}/status', response_model=ReclamacaoResponse)
+async def atualizar_status_reclamacao(
+    reclamacao_id: int,
+    dados: ReclamacaoStatusUpdate,
+    prefeitura: Prefeitura = Depends(get_current_prefeitura),
+    db: Session = Depends(get_db)
+):
+    reclamacao = db.query(Reclamacao).filter(
+        Reclamacao.id == reclamacao_id,
+        Reclamacao.prefeitura_id == prefeitura
+    ).first()
+
+    if not reclamacao:
+        raise HTTPException(status_code=404, detail='Reclamação não encontrada')
+    
+    reclamacao.status = dados.status
+    db.commit()
+    db.refresh(reclamacao)
+
     return reclamacao

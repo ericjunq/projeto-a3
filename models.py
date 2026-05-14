@@ -110,3 +110,4 @@ class Reclamacao(Base):
     )
 
     usuario = relationship('Usuario', back_populates='reclamacoes')
+    prefeitura = relationship('Prefeitura', back_populates='reclamacoes')
