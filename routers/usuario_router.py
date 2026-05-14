@@ -1,48 +1,43 @@
 from dependencies import get_db
-from models import Prefeitura, Usuario
+from models import Usuario, RefreshToken
 from schemas import PrefeituraSchema, UsuarioSchema, UsuarioResponse, PrefeituraResponse, UsuarioUpdate, PrefeituraUpdate
 from fastapi import Depends, HTTPException, APIRouter
 from security.security import get_current_prefeitura, get_current_user, criptografar_senha, verificar_senha, criar_access_token, criar_refresh_token
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
-auth_router = APIRouter(prefix='/auth', tags=['auth'])
+router = APIRouter(prefix='/auth', tags=['auth'])
 
-# Usuarios
-@auth_router.post('/cadastrar_usuario', response_model=UsuarioResponse)
-async def cadastrar_usuasrio(
+@router.post('/cadastrar_usuario', response_model=UsuarioResponse)
+async def cadastrar_usuario(
     usuarioschema: UsuarioSchema,
     db: Session = Depends(get_db)
 ):
     email_existente = db.query(Usuario).filter(
         Usuario.email == usuarioschema.email
-        ).first()
+    ).first()
     if email_existente:
         raise HTTPException(status_code=400, detail='Email já cadastrado')
     
     telefone_existente = db.query(Usuario).filter(
         Usuario.telefone == usuarioschema.telefone
     ).first()
-
     if telefone_existente:
         raise HTTPException(status_code=400, detail='Telefone já existente')
     
     cpf_existente = db.query(Usuario).filter(
         Usuario.cpf == usuarioschema.cpf
     ).first()
-
     if cpf_existente:
         raise HTTPException(status_code=400, detail='CPF já cadastrado')
     
-    senha_criptografada = criptografar_senha(usuarioschema.senha)
-
     usuario = Usuario(
-        nome = usuarioschema.nome,
-        sobrenome = usuarioschema.sobrenome,
-        email = usuarioschema.email,
-        senha_hash = senha_criptografada,
-        telefone = usuarioschema.telefone,
-        cpf = usuarioschema.cpf
+        nome=usuarioschema.nome,
+        sobrenome=usuarioschema.sobrenome,
+        email=usuarioschema.email,
+        senha_hash=criptografar_senha(usuarioschema.senha),
+        telefone=usuarioschema.telefone,
+        cpf=usuarioschema.cpf
     )
 
     db.add(usuario)
@@ -51,7 +46,7 @@ async def cadastrar_usuasrio(
     
     return usuario
 
-@auth_router.post('/login_usuario')
+@router.post('/login_usuario')
 async def login_usuario(
     dados: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -67,12 +62,21 @@ async def login_usuario(
         raise HTTPException(status_code=401, detail='Senha incorreta')
     
     access_token = criar_access_token(
-        data = {'sub': dados.username, 'type': 'access', 'origin': 'usuario'}
+        data={'sub': usuario.id, 'origin': 'usuario'}
     )
     
-    refresh_token = criar_refresh_token(
-        data = {'sub': dados.username, 'type': 'refresh', 'origin': 'usuario'}
+    refresh_token, expires, jti = criar_refresh_token(
+        data={'sub': usuario.id, 'origin': 'usuario'}
     )
+
+    refresh_token_obj = RefreshToken(
+        jti=jti,
+        token_hash=criptografar_senha(refresh_token),
+        usuario_id=usuario.id,
+        expires_at=expires
+    )
+    db.add(refresh_token_obj)
+    db.commit()
 
     return {
         'access_token': access_token,
@@ -80,7 +84,7 @@ async def login_usuario(
         'token_type': 'bearer'
     }
 
-@auth_router.patch('/editar_usuario', response_model=UsuarioResponse)
+@router.patch('/editar_usuario', response_model=UsuarioResponse)
 async def editar_usuario(
     dados: UsuarioUpdate,
     db: Session = Depends(get_db),

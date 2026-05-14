@@ -7,12 +7,14 @@ from fastapi import Depends, HTTPException
 from dependencies import get_db
 from sqlalchemy.orm import Session
 from models import Usuario, Prefeitura
+from uuid import uuid4
 
 passoword_hash = PasswordHash.recommended()
 
 user_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login_usuario')
 prefeitura_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login_prefeitura')
 
+# Funções de criptografia serão usadas para criptografia do access e refresh token
 def criptografar_senha(senha: str)-> str:
     return passoword_hash.hash(senha)
 
@@ -22,7 +24,7 @@ def verificar_senha(senha: str, senha_hash: str)-> bool:
 def criar_access_token(data: dict)-> str:
     to_encode = data.copy()
     expires = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expires_minutes)
-    to_encode.update({'exp': expires})
+    to_encode.update({'exp': expires, 'token_type': 'access'})
 
     access_token = jwt.encode(
         to_encode,
@@ -35,7 +37,8 @@ def criar_access_token(data: dict)-> str:
 def criar_refresh_token(data: dict)->str:
     to_encode = data.copy()
     expires = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expires_days)
-    to_encode.update({'exp': expires})
+    jti = str(uuid4())
+    to_encode.update({'exp': expires, 'jti': jti, 'token_type': 'refresh'})
 
     refresh_token = jwt.encode(
         to_encode,

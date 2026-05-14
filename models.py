@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from enum import Enum as SAEnum
 from enums import StatusReclamacao, TipoRequestEnum
 from sqlalchemy import Enum as SAEnum
+from datetime import datetime, timedelta
 
 
 class Usuario(Base):
@@ -34,12 +35,11 @@ class Prefeitura(Base):
     __tablename__ = 'prefeitura'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    nome = Column(String(20), nullable=False)
-    sobrenome = Column(String(40), nullable=False)
+    cidade = Column(String(20), nullable=False)
     email = Column(String(50), unique=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
     telefone = Column(String(11), unique=True, nullable=False)
-    cpf = Column(String(11), unique=True, nullable=False)
+    cnpj = Column(String(14), unique=True, nullable=False)
     token_valor = Column(String, ForeignKey('tokens_autenticadores.token'))
     token_id = Column(Integer, ForeignKey('tokens_autenticadores.id'), nullable=False, unique=True)
     created_at = Column(
@@ -53,10 +53,8 @@ class Prefeitura(Base):
     )
     status = Column(Boolean, default=True)
 
-    # foreign_keys explícito: usa token_id como chave do relacionamento
     token_autenticador = relationship(
         'TokenAutenticador',
-        foreign_keys='Prefeitura.token_id',
         back_populates='prefeitura'
     )
 
@@ -68,13 +66,23 @@ class TokenAutenticador(Base):
     token = Column(String, unique=True, nullable=False)
     usado = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), lambda: func.now() + timedelta(days=7))
+    prefeitura_id = Column(Integer, ForeignKey('prefeitura.id'), nullable=True)
 
     prefeitura = relationship(
         'Prefeitura',
-        foreign_keys='Prefeitura.token_id',
         back_populates='token_autenticador'
     )
 
+class RefreshToken(Base):
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    jti = Column(String, unique=True, nullable=False)
+    token_hash = Column(String, unique=True, nullable=False)
+    cexpires_at = Column(DateTime(timezone=True), lambda: func.now() + timedelta(days=30))
+    usuario_id = Column(Integer, ForeignKey('usuarios.id'))
+    prefeitura_id = Column(Integer, ForeignKey('prefeitura.id'))
+    revoked = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now()) 
 
 class Reclamacao(Base):
     __tablename__ = 'reclamacoes'
