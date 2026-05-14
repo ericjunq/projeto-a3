@@ -1,38 +1,6 @@
-# BACKEND A3
+# ⚙️BACKEND-A3
 
-## 📁 Estrutura Backend Profissional
-
-```
-backend/
-│── app/
-│   │── main.py                 🔹 Pessoa 1
-│   │── database.py             🔹 Pessoa 1
-│   │── config.py               🔹 Pessoa 1
-│   │
-│   ├── models/
-│   │     ├── user.py           🔹 Pessoa 1
-│   │     ├── complaint.py      🔸 Pessoa 2
-│   │
-│   ├── schemas/
-│   │     ├── user.py           🔹 Pessoa 1
-│   │     ├── complaint.py      🔸 Pessoa 2
-│   │
-│   ├── routes/
-│   │     ├── auth.py           🔹 Pessoa 1
-│   │     ├── users.py          🔹 Pessoa 1
-│   │     ├── complaints.py     🔸 Pessoa 2
-│   │     ├── upload.py         🔸 Pessoa 2
-│   │
-│   ├── services/
-│   │     ├── auth_service.py   🔹 Pessoa 1
-│   │
-│   ├── uploads/                🔸 Pessoa 2
-│   │     ├── imagens aqui
-│
-│── requirements.txt            🔹 Pessoa 1
-│── .env                        🔹 Pessoa 1
-│── README.md                   🔸 Pessoa 2
-```
+![Texto alternativo](./img/swagger.png)
 
 ## 🚀 Rodar Projeto
 ```
