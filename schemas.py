@@ -2,12 +2,11 @@ from pydantic import BaseModel, EmailStr
 from security.validations import CPF, Telefone, CNPJ
 from datetime import datetime
 from typing import Optional
-from enum import Enum
 from enums import TipoRequestEnum, StatusReclamacao
 
 class UsuarioSchema(BaseModel):
-    nome: str 
-    sobrenome: str 
+    nome: str
+    sobrenome: str
     email: EmailStr
     senha: str
     telefone: Telefone
@@ -29,9 +28,9 @@ class UsuarioUpdate(BaseModel):
     telefone: Optional[Telefone] = None
 
 class PrefeituraSchema(BaseModel):
-    cidade: str 
+    cidade: str
     email: EmailStr
-    senha: str 
+    senha: str
     telefone: Telefone
     cnpj: CNPJ
     token_autenticador: str
@@ -53,8 +52,6 @@ class PrefeituraUpdate(BaseModel):
     telefone: Optional[Telefone] = None
 
 
-# Reclamações Eric
-
 class ReclamacaoResponse(BaseModel):
     id: int
     tipo: TipoRequestEnum
@@ -65,8 +62,14 @@ class ReclamacaoResponse(BaseModel):
     descricao: str
     status: StatusReclamacao
     imagem_url: str
+    usuario_id: int
+    prefeitura_id: int          # ← adicionado para refletir o model
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_atributes = True
+        from_attributes = True  # ← corrigido: era "from_atributes" (typo)
+
+
+class ReclamacaoStatusUpdate(BaseModel):
+    status: StatusReclamacao

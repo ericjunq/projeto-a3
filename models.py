@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from enum import Enum as SAEnum
 from enums import StatusReclamacao, TipoRequestEnum
 from sqlalchemy import Enum as SAEnum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class Usuario(Base):
@@ -66,7 +66,7 @@ class TokenAutenticador(Base):
     token = Column(String, unique=True, nullable=False)
     usado = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    expires_at = Column(DateTime(timezone=True), lambda: func.now() + timedelta(days=7))
+    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(days=7))
     prefeitura_id = Column(Integer, ForeignKey('prefeitura.id'), nullable=True)
 
     prefeitura = relationship(
@@ -75,14 +75,16 @@ class TokenAutenticador(Base):
     )
 
 class RefreshToken(Base):
+    __tablename__ = 'refresh_tokens'
+
     id = Column(Integer, autoincrement=True, primary_key=True)
     jti = Column(String, unique=True, nullable=False)
     token_hash = Column(String, unique=True, nullable=False)
-    cexpires_at = Column(DateTime(timezone=True), lambda: func.now() + timedelta(days=30))
+    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(days=30))
     usuario_id = Column(Integer, ForeignKey('usuarios.id'))
     prefeitura_id = Column(Integer, ForeignKey('prefeitura.id'))
     revoked = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now()) 
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Reclamacao(Base):
     __tablename__ = 'reclamacoes'
